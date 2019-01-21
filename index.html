@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>上升的白气球</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            padding: 0;
+            text-align: center;
+        }
+
+        canvas {
+            box-shadow: 0 0 5px black;
+        }
+
+        .mask {
+            position: fixed;
+            background: rgba(0, 0, 0, 0.7);
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            /* text-align: center; */
+        }
+
+        .loading {
+            background: gainsboro;
+            padding: 20px;
+            display: inline-block;
+            margin: calc(20% - 20px) 0;
+            text-align: center;
+        }
+
+        input {
+            display: block;
+            height: 70px;
+            width: 210px;
+        }
+    </style>
+    <script src="js/sprite.js"></script>
+    <script src="js/image.js"></script>
+    <script src="js/loading.js"></script>
+    <script src="js/draw.js"></script>
+    <script src="js/height_scroe.js"></script>
+</head>
+
+
+<body>
+    <canvas id="can" width="500" height="600"></canvas>
+    <audio>
+        <source src="C:\Users\admin\Desktop\canvas 项目\skycitye.mp3">
+    </audio>
+    <div class="mask">
+        <div class="loading">
+            <input type="number" placeholder="请输入手机号码">
+          
+            <button>登录</button>
+        </div>
+    </div>
+    <script>
+        //获取到audio
+        var ad = document.getElementsByTagName('audio')[0];
+        // debugger
+        //主键
+        var key;
+        //得分存放的数组
+        var scroearr = [];
+        //获取mask
+        var mask = document.getElementsByClassName('mask')[0];
+        //获取input框
+        var inp = document.getElementsByTagName('input')[0];
+        //获取按钮
+        var btn = document.getElementsByTagName('button')[0];
+        //手机号码正则
+        var reg = /^1(3|4|5|7|8)\d{9}$/;
+        btn.addEventListener('click', function () {
+            if (reg.test(inp.value)) {
+                key = inp.value;
+                mask.style.display = 'none';
+                scroearr =
+                    localStorage.getItem(key) == undefined ? [] :
+                    JSON.parse(localStorage.getItem(key));
+                loading();
+            } else {
+                alert('请输入正确格式！！')
+            }
+        })
+
+        //奖励开关
+        var int_flag = false;
+        //圆点大小
+        var yuan_width = 60;
+        //生成间隔
+        var createNun = 20;
+        //格子的速度
+        var speed = 2;
+        //圆点坐标
+        var x, y;
+        //帧动画名称
+        var ccc;
+        //存放所有对象的数组
+        var boxarr = [];
+        //最高得分 上次的分
+        var best, last;
+        //总的时间条
+        var time = 0;
+        //得分
+        var scroe = 0;
+        //点击事件的开关
+        var flag = false;
+        // var flag1 = false;
+        var can = document.getElementById("can");
+        var ctx = can.getContext("2d");
+        var maxw = can.width;
+        var maxh = can.height;
+        loading();
+        var img1 = new Image();
+        img1.src = "img/balloon.png";
+        var img2 = new Image();
+        img2.src = "img/tut.png";
+        can.addEventListener("mousedown", playgo_);
+        //开始按钮事件
+        function playgo_(e) {
+            var e = e || window.event;
+            var x = e.clientX - can.offsetLeft;
+            var y = e.clientY - can.offsetTop;
+            if (!flag) {
+                if (Cilckplay(x, y)) {
+                    console.log("要开始了!");
+                    tut();
+                    flag = true;
+                };
+                if (tri(x, y)) {
+                    //最高排名
+                    allures()
+                    console.log('sanjiao')
+                }
+                if (hand(x, y)) {
+                    //个人最高分
+                    oneures()
+                    console.log('shou')
+                }
+                if (Clickclose(x, y)) {
+                    loading();
+                }
+            }
+            if (flag) {
+                if (Clickclose(x, y)) {
+                    console.log("关闭了教程!");
+                    ad.play();
+                    boxarr = [];
+                    scroe = 0;
+                    time = 0;
+                    speed = 2;
+                    createNun = 20;
+                    yuan_width = 60;
+                    ani();
+                }
+            }
+        }
+        //鼠标移动事件
+        can.addEventListener("mousemove", move_);
+        //开始按钮之后动画
+        function ani() {
+            time++;
+            ctx.clearRect(0, 0, can.width, can.height);
+            ctx.beginPath();
+            ctx.fillStyle = "skyblue";
+            ctx.fillRect(0, 0, maxw, maxh);
+            ctx.closePath();
+            if (time % 300 == 0) {
+                speed++;
+            }
+            if (time % 120 == 0) {
+                if (yuan_width != 20) {
+                    yuan_width--;
+                }
+            }
+            if (int_flag) {
+                if (scroe % 360 == 0) {
+                    yuan_width += 5;
+                    int_flag = false;
+                }
+            }
+            if (time % 1000 == 0) {
+                if (createNun != 2) {
+                    createNun--;
+                }
+            }
+            if (time % createNun == 0) {
+                var type;
+                if (time % 300 == 0) {
+                    type = '五角星'
+                } else {
+                    type = '格子'
+                }
+                var onebox = CreaDraw(type, speed);
+                boxarr.push(onebox);
+            }
+            for (var i in boxarr) {
+                boxarr[i].paint(ctx);
+                boxarr[i].updata(time);
+                if (!boxarr[i].visible) {
+                    boxarr.splice(i, 1);
+                }
+            }
+            if (img1.complete) {
+                ctx.drawImage(
+                    img1,
+                    can.width / 2 - 60 / 2,
+                    can.height / 2 + 90,
+                    60,
+                    120
+                );
+            }
+            if (img2.complete) {
+                ctx.drawImage(img2, 70, 110, 60, 60, x, y, yuan_width, yuan_width);
+            }
+            var obj1 = {
+                l: x,
+                r: x + yuan_width,
+                t: y,
+                b: y + yuan_width
+            };
+            var obj = {
+                l: 220,
+                r: 280,
+                t: 390,
+                b: 450
+            };
+            for (var i = 0; i < boxarr.length; i++) {
+                var obj2 = {
+                    l: boxarr[i].x,
+                    r: boxarr[i].x + boxarr[i].width,
+                    t: boxarr[i].y,
+                    b: boxarr[i].y + boxarr[i].width
+                };
+                for (var j = 0; j < boxarr.length; j++) {
+                    if (boxarr[i] == boxarr[j]) {
+                        continue;
+                    } else {
+                        if (boxarr[j].condition) {
+                            var obj3 = {
+                                l: boxarr[j].x,
+                                r: boxarr[j].x + boxarr[j].width,
+                                t: boxarr[j].y,
+                                b: boxarr[j].y + boxarr[j].width
+                            };
+                            if (peng(obj3, obj2)) {
+                                if (obj3.r <= obj2.l) {
+                                    // debugger
+                                    boxarr[j].condition = "right";
+                                }
+                                if (obj3.l >= obj2.r) {
+                                    // debugger
+                                    boxarr[j].condition = "left";
+                                }
+                            }
+                        } else {
+                            continue
+                        }
+                    }
+                }
+                if (peng(obj1, obj2)) {
+                    console.log("阻止了障碍");
+                    if (boxarr[i].name == '五角星') {
+                        if (boxarr[i].hp == 1) {
+                            scroe += 5;
+                            boxarr[i].hp = 0;
+                        }
+                    }
+                    boxarr[i].color = 'white';
+                    if (obj1.l + yuan_width / 2 <= boxarr[i].x + boxarr[i].width) {
+                        // debugger
+                        boxarr[i].condition = "left";
+                    } else {
+                        boxarr[i].condition = "right";
+                    }
+                    if (obj1.t >= boxarr[i].y + boxarr[i].width / 2) {
+                        boxarr[i].y = obj1.t - boxarr[i].width;
+                    }
+
+                }
+                if (peng(obj2, obj)) {
+                    scroearr.push(scroe);
+                    localStorage.setItem(key, JSON.stringify(scroearr));
+                    flag = false;
+                    console.log("结束了");
+                    loading();
+                    ad.pause();
+                    return window.cancelAnimationFrame(ccc);
+                }
+            }
+            if (time % 60 == 0) {
+                scroe++;
+                int_flag = true;
+            }
+            ctx.font = "bold 20px Arial";
+            ctx.fillStyle = "black";
+            ctx.fillText("scroe:" + scroe, 10, 20);
+            ctx.closePath();
+            ccc = window.requestAnimationFrame(ani);
+        }
+
+        function move_(ev) {
+            if (flag) {
+                var e = ev || window.event;
+                x = e.pageX - can.offsetLeft - yuan_width / 2;
+                y = e.pageY - can.offsetTop - yuan_width / 2;
+            }
+        }
+
+        function Cilckplay(x, y) {
+            if (x >= 189 && x <= 311 && y >= 200 && y <= 322) {
+                return true;
+            }
+        }
+
+        function hand(x, y) {
+            if (x >= can.width / 2 + 90 && x <= can.width / 2 + 90 + 90 && y >= can.height / 2 + 90 && y <= can.height /
+                2 +
+                90 + 90) {
+                return true;
+            }
+        }
+
+        function tri(x, y) {
+            if (x >= 70 && x <= 160 && y >= 390 && y <= 480) {
+                return true
+            }
+        }
+
+        function Clickclose(x, y) {
+            if (x >= 410 && x <= 500 && y >= 0 && y <= 90) {
+                return true;
+            }
+        }
+        //碰撞检测
+        function peng(obj1, obj2) {
+            if (
+                obj1.l <= obj2.r &&
+                obj1.r >= obj2.l &&
+                obj1.t <= obj2.b &&
+                obj1.b >= obj2.t
+            ) {
+                return true;
+            }
+        }
+    </script>
+</body>
+
+</html>
