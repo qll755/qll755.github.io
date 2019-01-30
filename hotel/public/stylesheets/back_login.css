@@ -1,0 +1,43 @@
+*{
+  margin: 0;
+  padding: 0;
+}
+body{
+  background: url('/images/back_login.jpg') center 0 no-repeat;
+  background-size: auto;
+}
+body>div{
+  border-radius: 10px;
+  padding-top: 50px;
+  padding-bottom: 50px;
+  background:rgba(0, 0, 0, 0.3);
+  display: inline-block;
+  color: white;
+  width: 500px;
+  position: fixed;
+  top:30%;
+  left: 31%;
+  font-size: 25px;
+}
+input {
+  outline: none;
+  height: 25px;
+  width: 250px
+}
+p{
+  margin: 4px;
+}
+.btn{
+  width: 80px;
+  height: 35px;
+  text-align: center;
+  background:green;
+  margin: 0 auto;
+  border-radius: 5px;
+}
+span{
+  display: inline-block;
+  width: 156px;
+  text-align: center;
+}
+

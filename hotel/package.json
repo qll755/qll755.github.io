@@ -13,7 +13,9 @@
     "express-art-template": "^1.0.1",
     "http-errors": "~1.6.2",
     "jade": "~1.11.0",
+    "jquery": "^3.3.1",
     "layui": "0.0.1",
+    "layui-src": "^2.4.5",
     "morgan": "~1.9.0",
     "mysql": "^2.16.0"
   }

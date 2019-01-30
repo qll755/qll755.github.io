@@ -1,7 +1,7 @@
 var con = require('./db_con');
 var db = require('mysql');
 var pool = db.createPool(con);
-ruery = (sql, callback) => {
+query = (sql, callback) => {
     pool.getConnection(function (err, link) {
         if (err) {
             console.log('连接池找不到连接对象！' + err)
@@ -17,10 +17,10 @@ ruery = (sql, callback) => {
     })
 }
 // 判断语句
-where = (data) => {
+w = (data) => {
     let where_ = 'where ';
     for (var i in data) {
-        where_ += `${i} = '${data[i]}' and`;
+        where_ += `${i} = '${data[i]}' and `;
     }
     where_ += ' 1';
     return where_
@@ -50,48 +50,53 @@ inster = (data) => {
 }
 // 返回数据格式的方法   对象
 for_mata = (code, msg, data = [], count = 0) => {
-    var obj = { code, msg, data, count };
-    return obj;
+    let obj = { code, msg, data, count };
+    return (obj);
 }
 // 执行sql语句的方法
-gosql = (sql) => {
+gosql = (sql, callback) => {
     query(sql, function (e) {
         let data = '';
         if (e) {
-            data = for_mata(0, '操作成功！', e);
+            data = for_mata(1, '操作成功！', e);
         } else {
-            data = for_mata(1, '操作失败！')
+            data = for_mata(0, '操作失败！')
         }
-        return data;
+        callback(data);
     })
 }
 C = (tablename, data, callback) => {
     let data0bj = inster(data);
     let sql = `insert into \`${tablename}\` (${data0bj['k']}) values (${data0bj['v']})`;
-    var result = gosql(sql);
-    callback(JSON.stringify(result));
+    gosql(sql, function (e) {
+        callback(JSON.stringify(e));
+    });
 };
 U = (tablename, data, callback) => {
     let up = updata(data);
     let sql = `update \`${tablename}\`set ${up}`;
-    let result = gosql(sql);
-    callback(JSON.stringify(result));
+    gosql(sql, function (e) {
+        callback(JSON.stringify(e));
+    });
 }
 R = (tablename, callback, data = 1) => {
-    let where = where(data);
-    let sql = `select * from \`${tablename}\`where ${wher}`;
+    let where = w(data);
+    let sql = `select * from \`${tablename}\` ${where}`;
     // 没有数量的信息; 
-    let nocount = gosql(sql);
-    sql = `SELECT COUNT(*) FROM \`${tablename}\` WHERE ${where}`;
-    let count = gosql(sql).data;
-    nocount.count = count;
-    callback(JSON.stringify(nocount));
+    gosql(sql, function (e) {
+        var data = e;
+        let sql = `SELECT COUNT(*) FROM \`${tablename}\`  ${where}`;
+        gosql(sql, function (e) {
+            data.count = e.data[0]["COUNT(*)"];
+            callback(JSON.stringify(data));
+        })
+    });
 }
 D = (tablename, data, callback) => {
     let wher_ = where(data);
     let sql = `DELETE FROM \`${tablename}\` WHERE ${wher_}`;
-    let result = gosql(sql);
-    callback(JSON.stringify(result));
-
+    gosql(sql, function (e) {
+        callback(JSON.stringify(e));
+    });
 };
 module.exports = { C, U, R, D };
