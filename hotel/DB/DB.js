@@ -28,13 +28,13 @@ w = (data) => {
 // 修改语句的处理
 updata = (data) => {
     let up = '';
-    let where = where(data['where']);
+    let where = w(data['where']);
     delete data['where'];
     for (var i in data) {
         up += `${i}='${data[i]}',`
     }
     up = up.substring(0, up.length - 1);
-    up += ` where ${where}`;
+    up += ` ${where}`;
     return up;
 }
 // 添加语句的处理方法
@@ -68,6 +68,7 @@ gosql = (sql, callback) => {
 C = (tablename, data, callback) => {
     let data0bj = inster(data);
     let sql = `insert into \`${tablename}\` (${data0bj['k']}) values (${data0bj['v']})`;
+    console.log(sql)
     gosql(sql, function (e) {
         callback(JSON.stringify(e));
     });
@@ -75,6 +76,7 @@ C = (tablename, data, callback) => {
 U = (tablename, data, callback) => {
     let up = updata(data);
     let sql = `update \`${tablename}\`set ${up}`;
+    console.log(sql);
     gosql(sql, function (e) {
         callback(JSON.stringify(e));
     });
@@ -93,10 +95,11 @@ R = (tablename, callback, data = 1) => {
     });
 }
 D = (tablename, data, callback) => {
-    let wher_ = where(data);
-    let sql = `DELETE FROM \`${tablename}\` WHERE ${wher_}`;
+    let wher_ = w(data);
+    console.log(wher_);
+    let sql = `DELETE FROM \`${tablename}\` ${wher_}`;
     gosql(sql, function (e) {
         callback(JSON.stringify(e));
     });
 };
-module.exports = { C, U, R, D };
+module.exports = { C, U, R, D, gosql };
